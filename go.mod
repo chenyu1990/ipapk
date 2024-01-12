@@ -1,4 +1,4 @@
-module ipapk
+module github.com/chenyu1990/ipapk
 
 go 1.18
 
