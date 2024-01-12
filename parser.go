@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -52,7 +51,18 @@ type iosPlist struct {
 	CFBundleIdentifier   string `plist:"CFBundleIdentifier"`
 }
 
-func NewAppParser(name string) (*AppInfo, error) {
+func NewAppParseFromBytes(data []byte) (*AppInfo, error) {
+	buffer := bytes.NewBuffer(data)
+	x := bytes.NewReader(buffer.Bytes())
+	reader, err := zip.NewReader(x, int64(buffer.Len()))
+	if err != nil {
+		return nil, err
+	}
+
+	return parser(reader)
+}
+
+func NewAppParserFromFile(name string) (*AppInfo, error) {
 	file, err := os.Open(name)
 	if err != nil {
 		return nil, err
@@ -69,6 +79,14 @@ func NewAppParser(name string) (*AppInfo, error) {
 		return nil, err
 	}
 
+	return parser(reader, name)
+}
+
+func parser(reader *zip.Reader, filenames ...string) (*AppInfo, error) {
+	var filename string
+	if len(filenames) > 0 {
+		filename = filenames[0]
+	}
 	var xmlFile, plistFile, iosIconFile *zip.File
 	for _, f := range reader.File {
 		switch {
@@ -81,22 +99,23 @@ func NewAppParser(name string) (*AppInfo, error) {
 		}
 	}
 
-	ext := filepath.Ext(stat.Name())
-
-	if ext == androidExt {
+	if xmlFile != nil {
 		info, err := parseApkFile(xmlFile)
-		icon, label, err := parseApkIconAndLabel(name)
-		info.Name = label
-		info.Icon = icon
-		info.Size = stat.Size()
+		if filename != "" {
+			icon, label, err := parseApkIconAndLabel(filename)
+			if err != nil {
+				return info, err
+			}
+			info.Name = label
+			info.Icon = icon
+			//info.Size = stat.Size()
+		}
 		return info, err
-	}
-
-	if ext == iosExt {
+	} else if plistFile != nil || iosIconFile != nil {
 		info, err := parseIpaFile(plistFile)
 		icon, err := parseIpaIcon(iosIconFile)
 		info.Icon = icon
-		info.Size = stat.Size()
+		//info.Size = stat.Size()
 		return info, err
 	}
 
