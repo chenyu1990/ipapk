@@ -4,8 +4,8 @@
 	"package": [
 		{
 			"checksumSHA1": "oYHVIFpLyGN6pVjljblPR+LS30I=",
-			"path": "github.com/DHowett/go-plist",
-			"revision": "84d08b7bddb35583bb3153b811c6cc52bb306f52",
+			"path": "github.com/chenyu1990/go-plist",
+			"revision": "573de27842fc6a6479af8891f3441e9dbdf74eee",
 			"revisionTime": "2018-02-14T08:12:42Z"
 		},
 		{
